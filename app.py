@@ -265,4 +265,7 @@ def update_map_lines(n_clicks, origin, destination, speed):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    #app.run_server(debug=True)
+    # Use the PORT environment variable for the port, and 0.0.0.0 for the host to be accessible externally
+    port = int(os.environ.get('PORT', 8050))
+    app.run_server(debug=False, host='0.0.0.0', port=port)

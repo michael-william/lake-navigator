@@ -1,0 +1,4 @@
+# Ignore specific files
+app_old.py
+lakenav.ipynb
+test.py

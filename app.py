@@ -202,7 +202,7 @@ modal = html.Div(
                         "Instructions on how to use the app:", html.Br(),
                         "1. Enter the origin and destination in the respective fields", html.Br(),
                         "2. Adjust the speed using the slider", html.Br(),
-                        "3. Click on the 'Navigate!' button to get the route and details", html.Br(),
+                        "3. Click on the 'Let's Go!' button to get the route and details", html.Br(),
                     ])
                 ),
                 dbc.ModalFooter(

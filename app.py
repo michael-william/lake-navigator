@@ -20,13 +20,16 @@ client = OpenAI(
 )
 
 # Initiate Dash app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], assets_folder = 'assets' )
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"], assets_folder = 'assets')
+#app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], assets_folder = 'assets' )
 
+# Strips junk from GPT response
 def clean_json_string(json_string):
     pattern = r'^```json\s*(.*?)\s*```$'
     cleaned_string = re.sub(pattern, r'\1', json_string, flags=re.DOTALL)
     return cleaned_string.strip()
 
+# Calls GPT to get all data from origin and destination
 def get_city_data(city_name):
     if city_name:
         try:
@@ -54,9 +57,10 @@ def get_city_data(city_name):
     else:
         return None
 
-# Define function for calculating map markers and path at sea of route ports
+# Calculate map markers and path
 def get_route_line(origin_data, destination_data, speed):
     
+    # Port data from GPT JSONresponse
     origin = [origin_data["latitude"], origin_data["longitude"]]  
     destination = [destination_data["latitude"], destination_data["longitude"]]
 
@@ -69,7 +73,7 @@ def get_route_line(origin_data, destination_data, speed):
     # Extract latitude and longitude for plotting
     lons, lats = zip(*route_coords)
 
-    # Modify Origin lines
+    # Modify lat and lon when the first and last coords don't match the origin and destination
     if lons[0] != origin[1]:
         modified_tuple = (origin[1],) + lons[1:]
         lons = modified_tuple
@@ -110,7 +114,7 @@ def get_route_line(origin_data, destination_data, speed):
 
     cluster = dl.LayerGroup(children=markers)
    
-    # Calculate path at sea
+    # Calculate sea path
     markers_line = []
     length = 0
     duration_hours = 0
@@ -133,16 +137,16 @@ def get_route_line(origin_data, destination_data, speed):
         lineCap='round',
         lineJoin='round'
     )
-    patterns = [dict(
-        offset='5%', repeat='30px', endOffset='10%', 
+    # Create arrows on line shoing direction
+    patterns = [dict(offset='5%', repeat='30px', endOffset='10%', 
         arrowHead=dict(pixelSize=8, polygon=False, pathOptions=dict(stroke=True, color='ForestGreen', weight=1, opacity=10, smoothFactor=1)
-                       )
-                    )
-        ]
+        ))]
+    
+    # Create a fancy map object of for the line
     dline = dl.PolylineDecorator(children=line, patterns=patterns)
     print(dline)
 
-    # Calculate bounds
+    # Calculate bounds for the map based on the origin and destination coords
     min_lat = min(lat for lat, lon in markers_line) - 2
     max_lat = max(lat for lat, lon in markers_line) + 2
     min_lon = min(lon for lat, lon in markers_line) - 2
@@ -156,47 +160,105 @@ def get_route_line(origin_data, destination_data, speed):
     return cluster, dline, centroid, bounds, duration_hours, duration_days, length
 
 
+# # Define the modal
+# modal = html.Div(
+#     [
+#         dbc.Button("How to use this app", id="open-modal", n_clicks=0, className="mb-3"),
+#         dbc.Modal(
+#             [
+#                 dbc.ModalHeader(dbc.ModalTitle("How to Use This App")),
+#                 dbc.ModalBody(
+#                     """
+#                     Instructions on how to use the app:
+#                     1. Enter the origin and destination in the respective fields.
+#                     2. Adjust the speed using the slider.
+#                     3. Click on the 'Navigate!' button to get the route and details.
+#                     """
+#                 ),
+#                 dbc.ModalFooter(
+#                     dbc.Button("Close", id="close-modal", className="ml-auto")
+#                 ),
+#             ],
+#             id="modal",
+#             is_open=False,
+#         ),
+#     ]
+# )
+
+modal = html.Div(
+    [
+        dbc.Button(
+            html.I(className="fas fa-info-circle"),  # Font Awesome info icon
+            id="open-modal",
+            n_clicks=0,
+            className="icon-button mb-3",  # Custom class for styling
+        ),
+        dbc.Modal(
+            [
+                dbc.ModalHeader(dbc.ModalTitle("How to Use This App")),
+                dbc.ModalBody(
+                    html.P([
+                    
+                        "Instructions on how to use the app:", html.Br(),
+                        "1. Enter the origin and destination in the respective fields", html.Br(),
+                        "2. Adjust the speed using the slider", html.Br(),
+                        "3. Click on the 'Navigate!' button to get the route and details", html.Br(),
+                    ])
+                ),
+                dbc.ModalFooter(
+                    dbc.Button("Close", id="close-modal", className="ml-auto")
+                ),
+            ],
+            id="modal",
+            is_open=False,
+        ),
+    ]
+)
+
 # Define the layout
 app.layout = html.Div([
       # Left pane for dropdown and route information
     html.Div([
+        # Header logo
         html.Div([
             html.Img(src=app.get_asset_url('lakenav_logo.png'), className='logo'),
+            modal
             ],
             className="logo-container"
             ),
         # Inputs
         html.Div([
+            # Origin
             html.Div([
                 dbc.Label("Origin", style={'color': '#fff', 'fontWeight': 'bold'}),
-                dbc.Input(id='origin-input', type='text', value='Michigan City, IN', placeholder='Enter origin city', style={'marginBottom': '10px'}),
+                dbc.Input(id='origin-input', type='text', value='Michigan City, IN', placeholder='Enter origin city'),
             ],
             className="single-input"
             ),
+            # Destination
             html.Div([
                 dbc.Label("Destination", style={'color': '#fff', 'fontWeight': 'bold'}),
-                dbc.Input(id='destination-input', type='text', value='Thunder Bay, ON', placeholder='Enter destination city', style={'marginBottom': '10px'}),
+                dbc.Input(id='destination-input', type='text', value='Thunder Bay, ON', placeholder='Enter destination city'),
             ],
             className="single-input"
             ),
-            ], 
-            id='inputs', className='inputs'
+        ], 
+        id='inputs', className='inputs'
         ),
-        
+        # Speed input
         html.Div([
             dbc.Label("Speed (knots)", style={'color': '#fff', 'fontWeight': 'bold'}),
             dcc.Slider(id='speed-slider', min=1, max=15, step=1, value=5, marks={i: {'label': str(i), 'style': {'color': '#fff'}} for i in range(1, 26)}, tooltip={'always_visible': False}),
         ]),
+        # Navigate button anf route info
         html.Div([
             html.Div([
-                dbc.Button("Navigate!", id='navigate-button', className='navigate-button'),
+                dbc.Button("Let's Go!", id='navigate-button', className='navigate-button'),
             ],
             className="nav-box-item1", 
-            style={'marginTop': '20px', 'marginBottom': '20px'}
             ),
             dcc.Loading([
                 html.Div(id='route-info', className='route-info'),
-                html.Div(children=[], id='route-info2'),
             ], 
             className="nav-box-item2"
             ),
@@ -224,6 +286,22 @@ app.layout = html.Div([
     )
 ], className='main-container')
 
+# @app.callback(
+#     Output('route_markers', 'children'),
+#     Output('route_lines', 'children'), 
+#     Output('events_map', 'center'), 
+#     Output('events_map', 'zoom'),
+#     Output('events_map', 'bounds'),
+#     Output('route-info', 'children'),
+#     Output("modal", "is_open"),
+#     Input('navigate-button', 'n_clicks'),
+#     [Input("open-modal", "n_clicks"), Input("close-modal", "n_clicks")],
+#     State('origin-input', 'value'),
+#     State('destination-input', 'value'),
+#     State('speed-slider', 'value'),
+#     [State("modal", "is_open")],
+# )
+
 @app.callback(
     Output('route_markers', 'children'),
     Output('route_lines', 'children'), 
@@ -231,41 +309,59 @@ app.layout = html.Div([
     Output('events_map', 'zoom'),
     Output('events_map', 'bounds'),
     Output('route-info', 'children'),
+    Output("modal", "is_open"),
     Input('navigate-button', 'n_clicks'),
+    Input("open-modal", "n_clicks"),
+    Input("close-modal", "n_clicks"),
     State('origin-input', 'value'),
     State('destination-input', 'value'),
-    State('speed-slider', 'value')
+    State('speed-slider', 'value'),
+    State("modal", "is_open"),
 )
-def update_map_lines(n_clicks, origin, destination, speed):
-    if n_clicks is None:
-        origin_data = get_city_data('Michigan City, IN')
-        destination_data = get_city_data('Thunder Bay, ON')
-    else:
-        origin_data = get_city_data(origin)
-        destination_data = get_city_data(destination)
+def update_map_and_toggle_modal(n_clicks, open_modal_n_clicks, close_modal_n_clicks, origin, destination, speed, is_modal_open):
+    ctx = dash.callback_context
 
-    if not origin_data or not destination_data:
-        return [], [], [0, 0], 3, [[-50, -80], [50, 80]], "One of the cities could not be found."
-    else:
-        cluster, dline, centroid, bounds, duration_hours, duration_days, length = get_route_line(origin_data, destination_data, speed)
-        
-        route_name = origin_data['city_name'] + ' to ' + destination_data['city_name']
-        route_info = [
-            html.P([html.B("Route: "), route_name]),
-            html.P([html.B("Distance: "), f"{length:.0f} km"]),
-            html.P([html.B("Speed: "), f"{speed} knots"]),
-            html.P([html.B("Duration: "), f"{duration_hours:.0f} hours({duration_days:.0f} days)"]),         
-        ]
-        
-        # Calculate the center based on the centroid of the bounds
-        center = [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2]
-        
-        return cluster, dline, center, 6, bounds, route_info
+    # Determine which input triggered the callback
+    if not ctx.triggered:
+        return [], [], [0, 0], 1, [[0, 0], [0, 0]], "", is_modal_open
 
+    triggered_id = ctx.triggered[0]['prop_id'].split('.')[0]
 
+    # Toggle modal
+    if triggered_id == "open-modal" or triggered_id == "close-modal":
+        is_modal_open = not is_modal_open
+
+    # Handle navigation
+    if triggered_id == 'navigate-button' and n_clicks:
+        if n_clicks is None:
+            origin_data = get_city_data('Michigan City, IN')
+            destination_data = get_city_data('Thunder Bay, ON')
+        else:
+            origin_data = get_city_data(origin)
+            destination_data = get_city_data(destination)
+
+        if not origin_data or not destination_data:
+            return [], [], [0, 0], 3, [[-50, -80], [50, 80]], "One of the cities could not be found.", is_modal_open
+        else:
+            cluster, dline, centroid, bounds, duration_hours, duration_days, length = get_route_line(origin_data, destination_data, speed)
+            
+            route_name = origin_data['city_name'] + ' to ' + destination_data['city_name']
+            route_info = [
+                html.P([html.B("Route: "), route_name]),
+                html.P([html.B("Distance: "), f"{length:.0f} km"]),
+                html.P([html.B("Speed: "), f"{speed} knots"]),
+                html.P([html.B("Duration: "), f"{duration_hours:.0f} hours({duration_days:.0f} days)"]),         
+            ]
+            
+            # Calculate the center based on the centroid of the bounds
+            center = [(bounds[0][0] + bounds[1][0]) / 2, (bounds[0][1] + bounds[1][1]) / 2]
+            
+            return cluster, dline, center, 6, bounds, route_info, is_modal_open
+
+    return [], [], [0, 0], 1, [[0, 0], [0, 0]], "", is_modal_open
 
 if __name__ == '__main__':
-    #app.run_server(debug=True)
+    app.run_server(debug=True)
     # Use the PORT environment variable for the port, and 0.0.0.0 for the host to be accessible externally
-    port = int(os.environ.get('PORT', 8050))
-    app.run_server(debug=False, host='0.0.0.0', port=port)
+    # port = int(os.environ.get('PORT', 8050))
+    # app.run_server(debug=False, host='0.0.0.0', port=port)

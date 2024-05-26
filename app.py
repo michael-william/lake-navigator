@@ -361,7 +361,7 @@ def update_map_and_toggle_modal(n_clicks, open_modal_n_clicks, close_modal_n_cli
     return [], [], [0, 0], 1, [[0, 0], [0, 0]], "", is_modal_open
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    # app.run_server(debug=True)
     # Use the PORT environment variable for the port, and 0.0.0.0 for the host to be accessible externally
-    # port = int(os.environ.get('PORT', 8050))
-    # app.run_server(debug=False, host='0.0.0.0', port=port)
+    port = int(os.environ.get('PORT', 8050))
+    app.run_server(debug=False, host='0.0.0.0', port=port)

@@ -135,8 +135,8 @@
     width: 80%;
 }
 
-.leaflet-tooltip {
-    max-width: 300px; /* Adjust this value as needed */
+.leaflet-tooltip-pane {
+    width: 300px; /* Adjust this value as needed */
     white-space: normal; /* Allow text to wrap */
 }
 

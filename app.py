@@ -52,7 +52,7 @@ def get_city_data(city_name):
                      },
                     {"role": "user",
                     "content": f"""Fix spelling mistakes and best interpret {city_name} and determine its latitude and longitude. 
-                    Then generate a quirky one-sentence description of city.
+                    Then generate a quirky, a bit snarky one-sentence description of city.
                     Return only a json object with the following items: city_name, latitude, longitude, quirky_description./n/n""",
                     }
                 ],

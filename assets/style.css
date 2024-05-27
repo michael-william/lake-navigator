@@ -27,15 +27,20 @@
 
 .icon-button {
     background-color: transparent;  
-    border: none;  
+    border: none;
+	border-radius: 100%;    
     color: white; 
     font-size: 24px;  
-    padding: 10px;  
+    padding-left: 5px;
+	padding-right: 5px;
+	padding-top: 0px;
+	padding-bottom: 0px;  
     cursor: pointer;  
 }
 
 .icon-button:hover {
-    color: #ddd;  
+    color: #ffffff;
+	background-color: #1F314D;
 }
 
 .menu-button {
@@ -99,10 +104,15 @@
 
 .navigate-button{
 	margin-top: 10;
-	width: '100%'; 
-	background-color: '#DA7C1C'; 
-	border-color: '#DA7C1C'; 
-	font-weight: 'bold'
+	width: 100%; 
+	background-color: #1F314D; 
+	border-color: #1F314D; 
+	font-weight: 'bold';
+}
+
+.navigate-button:hover {
+	background-color: "#263C5E";
+	border-color: "#263C5E";
 }
 .nav-box {
 	display: flex;
@@ -123,6 +133,11 @@
     display: inline-block;
     height: 100%;
     width: 80%;
+}
+
+.leaflet-tooltip {
+    max-width: 150px; /* Adjust this value as needed */
+    white-space: normal; /* Allow text to wrap */
 }
 
 @media (max-width: 768px) {

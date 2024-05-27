@@ -8,6 +8,10 @@ from openai import OpenAI
 import json
 import re
 import os
+# from dotenv import load_dotenv
+
+# # Load environment variables from a .env file for local development
+# load_dotenv()
 
 # Initialize OpenAI API (replace 'YOUR_API_KEY' with your actual OpenAI API key)
 api_key = os.getenv('OPENAI_API_KEY')
@@ -20,8 +24,15 @@ client = OpenAI(
 )
 
 # Initiate Dash app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"], assets_folder = 'assets')
-#app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], assets_folder = 'assets' )
+app = dash.Dash(__name__, 
+                external_stylesheets=[
+                    dbc.themes.BOOTSTRAP, 
+                    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+                ], 
+                assets_folder = 'assets',
+                title="Great Lakes Whale Co.",  # Set the title of the app
+                update_title=None,  # Prevents "Updating..." title when navigating
+                )
 
 # Strips junk from GPT response
 def clean_json_string(json_string):
@@ -160,31 +171,7 @@ def get_route_line(origin_data, destination_data, speed):
     return cluster, dline, centroid, bounds, duration_hours, duration_days, length
 
 
-# # Define the modal
-# modal = html.Div(
-#     [
-#         dbc.Button("How to use this app", id="open-modal", n_clicks=0, className="mb-3"),
-#         dbc.Modal(
-#             [
-#                 dbc.ModalHeader(dbc.ModalTitle("How to Use This App")),
-#                 dbc.ModalBody(
-#                     """
-#                     Instructions on how to use the app:
-#                     1. Enter the origin and destination in the respective fields.
-#                     2. Adjust the speed using the slider.
-#                     3. Click on the 'Navigate!' button to get the route and details.
-#                     """
-#                 ),
-#                 dbc.ModalFooter(
-#                     dbc.Button("Close", id="close-modal", className="ml-auto")
-#                 ),
-#             ],
-#             id="modal",
-#             is_open=False,
-#         ),
-#     ]
-# )
-
+#  Define the modal
 modal = html.Div(
     [
         dbc.Button(
@@ -199,7 +186,7 @@ modal = html.Div(
                 dbc.ModalBody(
                     html.P([
                     
-                        "Instructions on how to use the app:", html.Br(),
+                        html.B("This app uses AI to help you plot your course:"), html.Br(),
                         "1. Enter the origin and destination in the respective fields", html.Br(),
                         "2. Adjust the speed using the slider", html.Br(),
                         "3. Click on the 'Let's Go!' button to get the route and details", html.Br(),
@@ -284,24 +271,10 @@ app.layout = html.Div([
          id='events_map', center=[45.310, -84.210], zoom=3, style={'width': '100%', 'height': '100%'})], 
         id='map-pane', className='map-pane'
     )
-], className='main-container')
+], 
+className='main-container')
 
-# @app.callback(
-#     Output('route_markers', 'children'),
-#     Output('route_lines', 'children'), 
-#     Output('events_map', 'center'), 
-#     Output('events_map', 'zoom'),
-#     Output('events_map', 'bounds'),
-#     Output('route-info', 'children'),
-#     Output("modal", "is_open"),
-#     Input('navigate-button', 'n_clicks'),
-#     [Input("open-modal", "n_clicks"), Input("close-modal", "n_clicks")],
-#     State('origin-input', 'value'),
-#     State('destination-input', 'value'),
-#     State('speed-slider', 'value'),
-#     [State("modal", "is_open")],
-# )
-
+# App callback
 @app.callback(
     Output('route_markers', 'children'),
     Output('route_lines', 'children'), 
@@ -318,6 +291,8 @@ app.layout = html.Div([
     State('speed-slider', 'value'),
     State("modal", "is_open"),
 )
+
+
 def update_map_and_toggle_modal(n_clicks, open_modal_n_clicks, close_modal_n_clicks, origin, destination, speed, is_modal_open):
     ctx = dash.callback_context
 
@@ -361,7 +336,10 @@ def update_map_and_toggle_modal(n_clicks, open_modal_n_clicks, close_modal_n_cli
     return [], [], [0, 0], 1, [[0, 0], [0, 0]], "", is_modal_open
 
 if __name__ == '__main__':
+    # Use this for development
     # app.run_server(debug=True)
+    
+    # Use this for development
     # Use the PORT environment variable for the port, and 0.0.0.0 for the host to be accessible externally
     port = int(os.environ.get('PORT', 8050))
     app.run_server(debug=False, host='0.0.0.0', port=port)

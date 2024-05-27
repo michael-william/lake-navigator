@@ -136,7 +136,7 @@
 }
 
 .leaflet-tooltip {
-    max-width: 150px; /* Adjust this value as needed */
+    max-width: 400px; /* Adjust this value as needed */
     white-space: normal; /* Allow text to wrap */
 }
 
